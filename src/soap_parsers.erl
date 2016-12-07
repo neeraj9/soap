@@ -28,7 +28,8 @@
          very_simple_form/0, 
          skip/1, 
          data_mapper/1, 
-         map/0]).
+         map/0,
+         map2/0]).
 
 -export([test/0, 
          tests/0]).
@@ -84,6 +85,37 @@ skip(Result) ->
 map() ->
     {fun callback/2, undefined}.
 
+%% translates the XML to a map
+%%
+%% Follows http://www.xml.com/lpt/a/1658
+%%
+%% XML                              Map
+%% <e/>                             #{<<"e">> => undefined}
+%% <e>text</e>                      #{<<"e">> => <<"text">>}
+%% <e name="value"/>                #{<<"e">> => #{<<"@name">> => <<"value">>}}
+%%
+%%
+%% The following is a special case where the "#text" is not in binary, hence any
+%% json serialization via jiffy will fail and only why you want to cater to this
+%% scenario must you fix it globally. (see insert_element/2 for details where
+%% the "#text" is in list form as hard-coded).
+%%
+%% <e name="value">text</e>         #{<<"e">> => #{<<"@name">> => <<"value">>, "#text" => <<"text">>}}
+%%
+%%
+%% <e><a>text</a><b>text</b></e>    #{<<"e">> => #{<<"a">> => <<"text">>, <<"b">> => <<"text">>}}
+%% <e><a>text</a><a>text</a></e>    #{<<"e">> => #{<<"a">> => [<<"text">>, <<"text">>] }}
+%% <e>text<a>text</a></e>           #{<<"e">> => #{<<"#text">> => <<"text">>, <<"a">> => <<"text">>}}
+-spec map2() -> {sax_callback_fun(), any()}.
+map2() ->
+    Namefun =
+        fun(Name, _Namespace, _Prefix, Type) ->
+            case Type of
+                element -> binary_value(Name);
+                attribute -> binary_value([$@ | Name])
+            end
+        end,
+    {fun callback/2, [{name_function, Namefun}]}.
 
 %%% ============================================================================
 %%% Internal functions
