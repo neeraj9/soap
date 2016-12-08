@@ -91,7 +91,7 @@ map() ->
 %% to transform the names as well, which is useful to
 %% perform operations like converting all names to binaries
 %% or make it camel case, etc.
--spec map(Namefun :: fun(Name::term(), Namespace::term(), Prefix::term(), Type::atom()) -> binary()) -> {sax_callback_fun(), any()}.
+-spec map(Namefun :: fun((Name::term(), Namespace::term(), Prefix::term(), Type::atom()) -> binary())) -> {sax_callback_fun(), any()}.
 map(Namefun) ->
     {fun callback/2, [{name_function, Namefun}]}.
 
