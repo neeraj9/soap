@@ -29,6 +29,7 @@
          skip/1, 
          data_mapper/1, 
          map/0,
+         map/1,
          map2/0]).
 
 -export([test/0, 
@@ -86,6 +87,16 @@ map() ->
     {fun callback/2, undefined}.
 
 %% translates the XML to a map
+%% This method additionally takes a function which is used
+%% to transform the names as well, which is useful to
+%% perform operations like converting all names to binaries
+%% or make it camel case, etc.
+-spec map(Namefun :: fun(Name::term(), Namespace::term(), Prefix::term(), Type::atom()) -> binary()) -> {sax_callback_fun(), any()}.
+map(Namefun) ->
+    {fun callback/2, [{name_function, Namefun}]}.
+
+
+%% translates the XML to a map
 %%
 %% Follows http://www.xml.com/lpt/a/1658
 %%
@@ -115,7 +126,7 @@ map2() ->
                 attribute -> binary_value([$@ | Name])
             end
         end,
-    {fun callback/2, [{name_function, Namefun}]}.
+    map(Namefun).
 
 %%% ============================================================================
 %%% Internal functions
